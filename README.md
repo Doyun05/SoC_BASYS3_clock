@@ -1,2 +1,3 @@
+![KakaoTalk_20241001_100217652](https://github.com/user-attachments/assets/f855adf4-3500-4aa1-9d81-61323ad9abc2)
 
-<img src=![KakaoTalk_20241001_100217652](https://github.com/user-attachments/assets/40ff9529-847d-4de2-bcd0-015fc1c85bf1)"  width="700" height="370">
+Verilog 이용한 미니 프로젝트 시계만들기
