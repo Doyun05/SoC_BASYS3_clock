@@ -1,0 +1,112 @@
+module My_watch(
+    input clk, reset_p,
+    input [2:0] btn,
+    input mod_watch,
+    input mod_stop,
+    input mode_cook,
+    input modbtn,
+    input btn_alarm_off,
+    output reg led_watch,
+    output reg led_stop,
+    output reg led_cook,
+    output reg [3:0] com,
+    output reg [7:0] seg_7,
+    output reg led_start, led_lap,
+    output reg led_alarm, buzz);
+
+    reg [1:0] mode;
+    
+    wire modbtn_last;
+    button_cnter btn3(.clk(clk), .reset_p(reset_p), .btn(modbtn), .btn_pedge(modbtn_last));
+    
+    always @(posedge clk or posedge reset_p) begin
+        if (reset_p) begin
+            mode = 2'b00;
+        end else begin
+            if (modbtn_last) begin
+                if (mode == 2'b10)
+                    mode = 2'b00;
+                else
+                    mode = mode + 1;
+            end
+        end
+    end
+
+    wire [2:0] btn_watch, btn_stop;
+    wire [3:0] btn_cook;
+    assign btn_watch = (mode == 2'b00) ? btn[2:0] : 3'b000; 
+    assign btn_stop = (mode == 2'b01) ? btn[2:0] : 3'b000; 
+    assign btn_cook = (mode == 2'b10) ? btn[2:0] : 3'b000;  
+
+    wire [3:0] com_watch, com_stop, com_cook;
+    wire [7:0] seg_7_watch, seg_7_stop, seg_7_cook;
+    wire led_start_watch, led_start_stop, led_start_cook;
+    wire led_lap_watch, led_lap_stop;
+    wire led_alarm_cook, buzz_cook;
+    
+    loadable_watch_top watch(
+        .clk(clk), .reset_p(reset_p), .btn(btn_watch),
+        .com(com_watch), .seg_7(seg_7_watch));
+    
+    stop_watch_csec_top stop(
+        .clk(clk), .reset_p(reset_p), .btn(btn_stop),
+        .com(com_stop), .seg_7(seg_7_stop),
+        .led_start(led_start_stop), .led_lap(led_lap_stop)
+    );
+    
+    cook_timer_top cook(
+        .clk(clk), .reset_p(reset_p), .btn(btn_cook), .btn_alarm_off(btn_alarm_off),
+        .com(com_cook), .seg_7(seg_7_cook),
+        .led_alarm(led_alarm_cook), .led_start(led_start_cook), .buzz(buzz_cook)
+    );
+    
+    always @(*) begin
+        case (mode)
+            2'b00: begin
+                com = com_watch;
+                seg_7 = seg_7_watch;
+                led_start = led_start_watch;
+                led_lap = led_lap_watch;
+                led_alarm = 1'b0;
+                buzz = 1'b0;
+                led_watch = 1'b1;
+                led_stop = 1'b0;
+                led_cook =1'b0;
+            end
+            2'b01: begin
+                com = com_stop;
+                seg_7 = seg_7_stop;
+                led_start = led_start_stop;
+                led_lap = led_lap_stop;
+                led_alarm = 1'b0;
+                buzz = 1'b0;
+                led_watch = 1'b0;
+                led_stop = 1'b1;
+                led_cook =1'b0;
+            end
+            2'b10: begin
+                com = com_cook;
+                seg_7 = seg_7_cook;
+                led_start = led_start_cook;
+                led_lap = 1'b0;
+                led_alarm = led_alarm_cook;
+                buzz = buzz_cook;
+                led_watch = 1'b0;
+                led_stop = 1'b0;
+                led_cook =1'b1;
+            end
+//            default: begin
+//                com = 4'b0000;
+//                seg_7 = 8'b00000000;
+//                led_start = 1'b0;
+//                led_lap = 1'b0;
+//                led_alarm = 1'b0;
+//                buzz = 1'b0;
+//                led_watch = 1'b0;
+//                led_stop =1'b0;
+//                led_cook = 1'b0;
+//            end
+        endcase
+    end
+
+endmodule
